@@ -16,6 +16,7 @@ class User(db.Model):
     username = db.Column(db.Text, nullable=False, unique=True)
     email = db.Column(db.Text, nullable=False, unique=True)
     password = db.Column(db.Text, nullable=False)
+    image_url = db.Column(db.Text)
 
     @classmethod 
     def register(cls, username, pwd, email, first_name, last_name):
@@ -44,6 +45,22 @@ class User(db.Model):
 
         db.session.add(user)
         return user
+    
+    @classmethod
+    def authenticate(cls, username, password):
+        """Authenticate the sign in. 
+
+        If can't find matching user (or if password is wrong), returns False.
+        """
+
+        user = cls.query.filter_by(username=username).first()
+
+        if user:
+            is_auth = bcrypt.check_password_hash(user.password, password)
+            if is_auth:
+                return user
+
+        return False
 
 class Story(db.Model):
     """Story information from publication"""
@@ -81,3 +98,12 @@ class Preferences(db.Model):
     user = db.Column(db.Integer, db.ForeignKey('users.id'))
     content_preference = db.Column(db.Integer, db.ForeignKey('content.id'))
     outlet_preference = db.Column(db.Integer, db.ForeignKey('outlets.id'))
+    country = db.Column(db.Text)
+
+
+class CountryPreferences(db.Model):
+    """Users set their country preferences"""
+    __tablename__ = "country_preferences"
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user = db.Column(db.Integer, db.ForeignKey('users.id'))
+    country = db.Column(db.Text)
