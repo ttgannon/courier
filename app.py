@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, render_template, session, g, flash, redirect, url_for, request
+from flask import Flask, render_template, session, g, flash, redirect, url_for, request, jsonify
 from models import connect_db, db, User, CountryPreferences
 from forms import UserAddForm, LoginForm, PreferencesForm
 from sqlalchemy.exc import IntegrityError
@@ -88,8 +88,6 @@ def login():
         return redirect('/')
     return render_template('login.html', form=form)
 
-
-
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     form = UserAddForm()
@@ -131,7 +129,13 @@ def user_home():
     """When user initially logs in, allow them to select preferences for their user experience."""
     user = User.query.get(g.user.id)
     form = PreferencesForm()
-    
+    return render_template('/user/home.html', user=user, countries=supported_countries, form=form)
+
+@app.route('/user/first_prefs', methods=['GET', 'POST'])
+@login_required
+def first_prefs():
+    user = User.query.get(g.user.id) 
+    form = PreferencesForm()
     if form.is_submitted() and form.validate():
         country_preferences = request.form.getlist('countries[]')
         for country in country_preferences:
@@ -143,9 +147,15 @@ def user_home():
             else:
                 db.session.delete(existing_pref)
         db.session.commit()
-        return redirect('/user/home')
-    
-    return render_template('/user/home.html', user=user, countries=supported_countries, form=form)
+
+        preferences = CountryPreferences.query.filter_by(user=g.user.id).all()
+        params = []
+        for country in preferences:
+            params.append(country.country)
+        response = requests.get(f"{BASE_URL}/top-headlines/sources", params={"country": params}, headers=headers)
+        data = response.json()
+        return jsonify(data)
+
 
 @app.route('/user/news')
 @login_required
@@ -154,3 +164,14 @@ def get_news():
     data = response.json()
     print(data)
     return render_template('/user/news.html')
+
+@app.route('/user/pref')
+@login_required
+def new_user_prefs():
+    preferences = CountryPreferences.query.filter_by(user=g.user.id).all()
+    params = []
+    for country in preferences:
+        params.append(country.country)
+    response = requests.get(f"{BASE_URL}/top-headlines/sources", params={"country": params})
+    data = response.json()
+    return jsonify(data)

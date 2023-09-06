@@ -20,7 +20,12 @@
 <h2>
     Let's get started. Help us store your preferences.
 </h2>
-<form action="/user/home" method="POST">
+
+<form>
+    <button type="button" class="btn btn-primary" id="getStartedBtn">Let's get started</button>
+</form>
+
+<form id="preferencesForm" style="display: none;">
     {{ form.hidden_tag() }}
     {% for field in form if field.widget.input_type != 'hidden' %}
         {% for error in field.errors %}
@@ -35,14 +40,43 @@
             </select>
         </div>
     {% endfor %}
-    <button type="submit" class="btn btn-primary">Select my countries</button>
+    <button type="submit" class="btn btn-primary" id="countryPrefBtn">Select my countries</button>
 </form>
 
-    
+<ol id="outletPrefs" style="display: none;">
+    {% for outlet in countries %}
+    <li>
+        {{outlet}}
+    </li>
+    {% endfor %}
+</ol>
 
-    
 
 <form action="/user/news">
     <button>What's the news?</button>
 </form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        let getStartedBtn = document.getElementById('getStartedBtn');
+        let preferencesForm = document.getElementById('preferencesForm');
+        getStartedBtn.addEventListener('click', () => {
+            if (preferencesForm.style.display === 'none') {
+                preferencesForm.style.display = 'block';
+            } 
+            let countryPrefBtn = document.getElementById('countryPrefBtn');
+        })
+
+        countryPrefBtn.addEventListener('click', getCountryPrefs)
+
+    })
+
+
+</script>
+<script src="app.js"></script>
+
+<!--         
+    //     countryPrefBtn.on("click", getCountryPrefs(countryPrefBtn))
+    //  -->
+
 {% endblock %}
