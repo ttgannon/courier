@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+<h1>welcome to courier, {{user.username}}</h1>
+{% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert alert-dismissible alert-{{ messages[0][0] }}">
+                <ul>
+                    {% for message in messages %}
+                        <li>{{ message[1] }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <h2>With courier, you can read news from sources you trust and no ads, curated to your preferences.</h2>
+<h2>
+    Let's get started. Help us store your preferences.
+</h2>
+
+<form>
+    <button class="btn btn-primary" type="button" id="getStartedBtn">Let's get started</button>
+</form>
+
+<form id="preferencesForm" style="display: none;">
+    {{ form1.hidden_tag() }}
+    {% for field in form1 if field.widget.input_type != 'hidden' %}
+        {% for error in field.errors %}
+            <span class="text-danger">{{ error }}</span>
+        {% endfor %}
+        <div class="form-group">
+            <label for="{{ field.id }}">{{ field.label.text }}</label>
+            <select name="{{ field.name }}[]" multiple class="form-control" id="{{ field.id }}">
+                {% for display, value in countries %}
+                    <option value="{{ value }}" {% if value in field.data %}selected{% endif %}>{{ display }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    {% endfor %}
+    <button class="btn btn-primary" type="button" id="countryPrefBtn">Select my countries</button>
+</form>
+
+<form id="outletForm">
+    {{ form2.hidden_tag() }}
+    {% for field in form2 if field.widget.input_type != 'hidden' %}
+        {% for error in field.errors %}
+            <span class="text-danger">{{ error }}</span>
+        {% endfor %}
+    <div class="form-group" id="outletDiv" style="display: none;">
+        <label for="{{ field.id }}">Select preferred outlets</label>
+        <select multiple class="form-control" id="outletPrefs" name="outlets[]"></select>
+        {% endfor %}
+        <button type="submit" id="submitUserPrefsBtn">Select Preferences</button>
+    </div>
+    
+</form>
+
+
+
+<form action="/user/news">
+    <button>What's the news?</button>
+</form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        let getStartedBtn = document.getElementById('getStartedBtn');
+        let countryPrefBtn = document.getElementById('countryPrefBtn');
+        let submitUserPrefsBtn = document.getElementById('submitUserPrefsBtn');
+
+        submitUserPrefsBtn.addEventListener('click', submitUserPrefs);
+        
+        getStartedBtn.addEventListener('click', () => {
+            if (preferencesForm.style.display === 'none') {
+                preferencesForm.style.display = 'block';
+            } 
+        });
+        countryPrefBtn.addEventListener('click', function() {
+            let preferencesForm = document.getElementById('preferencesForm');
+            getCountryPrefs(preferencesForm);
+        });
+    })
+
+async function getCountryPrefs(preferencesForm) {
+    let formData = new FormData(preferencesForm);
+    wipePreferredOutlets();
+    console.log(formData);
+    response = await axios.post("/user/first_prefs", formData);
+    
+    let outletForm = document.getElementById("outletForm");
+    outletForm.style.display = "block";
+
+    let outletDiv = document.getElementById("outletDiv");
+    outletDiv.style.display = "block";
+
+    let outletPrefs = document.getElementById("outletPrefs");
+    outletPrefs.style.display = "block";
+    console.log(response.data)
+    for (let country of response.data) {
+        if (country.sources.length > 0) {
+            
+            for (let i=0; i< country.sources.length; i++) {
+                let option = document.createElement("option");
+                option.textContent = country.sources[i].name;
+                outletPrefs.appendChild(option);
+            }
+        }
+        
+    }
+    
+}
+
+async function submitUserPrefs () {
+    let outletForm = document.getElementById("outletForm");
+    let preferencesForm = document.getElementById('preferencesForm');
+    let formData1 = new FormData(outletForm);
+    let formData2 = new FormData(preferencesForm);
+
+    let combinedFormData = new FormData();
+    for (let pair of formData1.entries()) {
+        combinedFormData.append(pair[0], pair[1]);
+    }
+    for (let pair of formData2.entries()) {
+        combinedFormData.append(pair[0], pair[1]);
+    }
+    let response = await axios.post("/submit_prefs", combinedFormData)
+}
+
+function wipePreferredOutlets() {
+    let outletPref = document.getElementById('outletPrefs');
+    outletPref.innerHTML = '';
+}
+</script>
+
+
+<!--         
+    //     countryPrefBtn.on("click", getCountryPrefs(countryPrefBtn))
+    //  -->
+
+{% endblock %}

@@ -3,7 +3,7 @@
 {% block content %}
 
 
-<h1>welcome to courier, {{user.username}}</h1>
+<h1>here's your preferred news</h1>
 {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             <div class="alert alert-dismissible alert-{{ messages[0][0] }}">
@@ -16,67 +16,13 @@
         {% endif %}
     {% endwith %}
 
-    <h2>With courier, you can read news from sources you trust and no ads, curated to your preferences.</h2>
-<h2>
-    Let's get started. Help us store your preferences.
-</h2>
-
-<form>
-    <button type="button" class="btn btn-primary" id="getStartedBtn">Let's get started</button>
-</form>
-
-<form id="preferencesForm" style="display: none;">
-    {{ form.hidden_tag() }}
-    {% for field in form if field.widget.input_type != 'hidden' %}
-        {% for error in field.errors %}
-            <span class="text-danger">{{ error }}</span>
-        {% endfor %}
-        <div class="form-group">
-            <label for="{{ field.id }}">{{ field.label.text }}</label>
-            <select name="{{ field.name }}[]" multiple class="form-control" id="{{ field.id }}">
-                {% for display, value in countries %}
-                    <option value="{{ value }}" {% if value in field.data %}selected{% endif %}>{{ display }}</option>
-                {% endfor %}
-            </select>
-        </div>
-    {% endfor %}
-    <button type="submit" class="btn btn-primary" id="countryPrefBtn">Select my countries</button>
-</form>
-
-<ol id="outletPrefs" style="display: none;">
-    {% for outlet in countries %}
-    <li>
-        {{outlet}}
-    </li>
-    {% endfor %}
-</ol>
-
-
 <form action="/user/news">
     <button>What's the news?</button>
 </form>
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        let getStartedBtn = document.getElementById('getStartedBtn');
-        let preferencesForm = document.getElementById('preferencesForm');
-        getStartedBtn.addEventListener('click', () => {
-            if (preferencesForm.style.display === 'none') {
-                preferencesForm.style.display = 'block';
-            } 
-            let countryPrefBtn = document.getElementById('countryPrefBtn');
-        })
-
-        countryPrefBtn.addEventListener('click', getCountryPrefs)
-
+        
     })
-
-
 </script>
-<script src="app.js"></script>
-
-<!--         
-    //     countryPrefBtn.on("click", getCountryPrefs(countryPrefBtn))
-    //  -->
-
 {% endblock %}

@@ -1,7 +1,7 @@
 import os
 
 from flask import Flask, render_template, session, g, flash, redirect, url_for, request, jsonify
-from models import connect_db, db, User, CountryPreferences
+from models import connect_db, db, User, CountryPreferences, OutletPreferences
 from forms import UserAddForm, LoginForm, PreferencesForm
 from sqlalchemy.exc import IntegrityError
 from functools import wraps
@@ -117,6 +117,19 @@ def signup():
 
 ####### Logged in user views and functions #######
 
+@app.route('/user_home')
+@login_required
+def go_homepage():
+    outletprefs = []
+    outletpreflist = OutletPreferences.query.filter_by(user=g.user.id).all()
+    for outlet in outletpreflist:
+        print("++++++++++++++++",outlet)
+        outletprefs.append(outlet)
+    stories = requests.get(f"{BASE_URL}/top-headlines?sources=", headers=headers)
+
+    return render_template('user/home.html')
+
+
 @app.route('/logout')
 @login_required
 def logout():
@@ -128,8 +141,9 @@ def logout():
 def user_home():
     """When user initially logs in, allow them to select preferences for their user experience."""
     user = User.query.get(g.user.id)
-    form = PreferencesForm()
-    return render_template('/user/home.html', user=user, countries=supported_countries, form=form)
+    form1 = PreferencesForm()
+    form2 = PreferencesForm()
+    return render_template('/user/first.html', user=user, countries=supported_countries, form1=form1, form2=form2)
 
 @app.route('/user/first_prefs', methods=['GET', 'POST'])
 @login_required
@@ -138,23 +152,15 @@ def first_prefs():
     form = PreferencesForm()
     if form.is_submitted() and form.validate():
         country_preferences = request.form.getlist('countries[]')
-        for country in country_preferences:
-            # find if user already has preference; remove it if so, add it if not
-            existing_pref = CountryPreferences.query.filter_by(user=g.user.id, country=country).first()
-            cpref = CountryPreferences(country=country, user=g.user.id)
-            if existing_pref is None:
-                db.session.add(cpref)
-            else:
-                db.session.delete(existing_pref)
-        db.session.commit()
-
-        preferences = CountryPreferences.query.filter_by(user=g.user.id).all()
         params = []
-        for country in preferences:
-            params.append(country.country)
-        response = requests.get(f"{BASE_URL}/top-headlines/sources", params={"country": params}, headers=headers)
-        data = response.json()
+        for country in country_preferences:
+            params.append(country)
+        data = []
+        for country in params:
+            response = requests.get(f"{BASE_URL}/top-headlines/sources?country={country}", headers=headers)
+            data.append(response.json())
         return jsonify(data)
+        
 
 
 @app.route('/user/news')
@@ -175,3 +181,23 @@ def new_user_prefs():
     response = requests.get(f"{BASE_URL}/top-headlines/sources", params={"country": params})
     data = response.json()
     return jsonify(data)
+
+
+@app.route('/submit_prefs', methods=["GET","POST"])
+@login_required
+def send_to_db():
+    form = PreferencesForm()
+    if form.is_submitted() and form.validate():
+        country_preferences = request.form.getlist('countries[]')
+        outlet_preferences = request.form.getlist('outlets[]')
+        for country in country_preferences:
+            # check if already in list
+            if CountryPreferences.query.filter_by(country=country, user=g.user.id).first() is None:
+                cpref = CountryPreferences(country=country, user=g.user.id)
+                db.session.add(cpref)
+        for outlet in outlet_preferences:
+            if OutletPreferences.query.filter_by(outlet=outlet, user=g.user.id).first() is None:
+                opref = OutletPreferences(user=g.user.id, outlet=outlet)
+                db.session.add(opref)
+        db.session.commit()
+    return redirect('/user_home')

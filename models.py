@@ -107,3 +107,10 @@ class CountryPreferences(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user = db.Column(db.Integer, db.ForeignKey('users.id'))
     country = db.Column(db.Text)
+
+class OutletPreferences(db.Model):
+    """Users set their country preferences"""
+    __tablename__ = "outlet_preferences"
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user = db.Column(db.Integer, db.ForeignKey('users.id'))
+    outlet = db.Column(db.Text)
