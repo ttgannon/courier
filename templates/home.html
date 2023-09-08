@@ -3,14 +3,29 @@
 {% block content %}
 
 
-<h1>welcome to courier</h1>
-<form action="/login">
-    <button>login</button>
-</form>
+<h1 class="container text-center" style="font-size: 500%;">welcome to <span style="font-family: 'Courier New', Courier, monospace;">courier.</span></h1>
 
-<form action="/signup">
-    <button>signup</button>
-</form>
+<div class="container d-flex justify-content-center align-items-center">
+    <div class="row">
+        <div class="col">
+            <form action="/login">
+                <button class="btn btn-primary btn-block" style="font-size: 200%;">Login</button>
+            </form>
+        </div>
+        <div class="col">
+            <form action="/signup">
+                <button class="btn btn-secondary btn-block" style="font-size: 200%;">Signup</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <img src="../static/theme.png" alt="" width="900" height="500" class="mx-auto d-block">
+</div>
+
+
+
 
 
 {% endblock %}

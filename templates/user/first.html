@@ -2,9 +2,9 @@
 
 {% block content %}
 
-
-<h1>welcome to courier, {{user.username}}</h1>
-{% with messages = get_flashed_messages(with_categories=true) %}
+<div class="container">
+    <h1 class="fade-in">welcome to courier, {{user.username}}</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             <div class="alert alert-dismissible alert-{{ messages[0][0] }}">
                 <ul>
@@ -33,7 +33,7 @@
         {% endfor %}
         <div class="form-group">
             <label for="{{ field.id }}">{{ field.label.text }}</label>
-            <select name="{{ field.name }}[]" multiple class="form-control" id="{{ field.id }}">
+            <select name="countries[]" multiple class="form-control" id="{{ field.id }}">
                 {% for display, value in countries %}
                     <option value="{{ value }}" {% if value in field.data %}selected{% endif %}>{{ display }}</option>
                 {% endfor %}
@@ -63,6 +63,8 @@
 <form action="/user/news">
     <button>What's the news?</button>
 </form>
+
+</div>
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -95,24 +97,26 @@ async function getCountryPrefs(preferencesForm) {
     let outletDiv = document.getElementById("outletDiv");
     outletDiv.style.display = "block";
 
+
     let outletPrefs = document.getElementById("outletPrefs");
     outletPrefs.style.display = "block";
-    console.log(response.data)
+    
     for (let country of response.data) {
         if (country.sources.length > 0) {
-            
             for (let i=0; i< country.sources.length; i++) {
                 let option = document.createElement("option");
                 option.textContent = country.sources[i].name;
+                option.value = country.sources[i].id, 
                 outletPrefs.appendChild(option);
             }
         }
         
     }
-    
+    // can send value as outlet-id 
 }
 
-async function submitUserPrefs () {
+async function submitUserPrefs (event) {
+    event.preventDefault();
     let outletForm = document.getElementById("outletForm");
     let preferencesForm = document.getElementById('preferencesForm');
     let formData1 = new FormData(outletForm);
@@ -125,7 +129,11 @@ async function submitUserPrefs () {
     for (let pair of formData2.entries()) {
         combinedFormData.append(pair[0], pair[1]);
     }
-    let response = await axios.post("/submit_prefs", combinedFormData)
+    // Send data to /submit_prefs route, then must use window.location.href to change to returned URL 
+    let resp = await axios.post("/submit_prefs", combinedFormData);
+    window.location.href = resp.request.responseURL;
+
+
 }
 
 function wipePreferredOutlets() {

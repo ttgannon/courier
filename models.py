@@ -114,3 +114,4 @@ class OutletPreferences(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user = db.Column(db.Integer, db.ForeignKey('users.id'))
     outlet = db.Column(db.Text)
+    outlet_id = db.Column(db.Text)

@@ -3,12 +3,13 @@ import os
 from flask import Flask, render_template, session, g, flash, redirect, url_for, request, jsonify
 from models import connect_db, db, User, CountryPreferences, OutletPreferences
 from forms import UserAddForm, LoginForm, PreferencesForm
-from sqlalchemy.exc import IntegrityError
 from functools import wraps
+from helpers import signUpNewUser, CURR_USER_KEY, handle_login, do_login
 import requests
 from config import api_key, supported_countries
+import json
 
-CURR_USER_KEY = "curr_user"
+
 BASE_URL = 'https://newsapi.org/v2'
 API_KEY = api_key
 headers = {'X-API-Key': API_KEY}
@@ -33,83 +34,49 @@ connect_db(app)
 @app.before_request
 def add_user_to_g():
     """If we're logged in, add curr user to Flask global."""
-
     if CURR_USER_KEY in session:
         g.user = User.query.get(session[CURR_USER_KEY])
-
     else:
         g.user = None
 
 
-def do_login(user):
-    """Log in user."""
-
-    session[CURR_USER_KEY] = user.id
-
-
 def do_logout():
     """Logout user."""
-
     if CURR_USER_KEY in session:
         del session[CURR_USER_KEY]
-
 
 def login_required(func):
     @wraps(func)
     def decorated_function(*args, **kwargs):
+        """Add login-required decorator"""
         if not g.user:
             flash('Please log in to access this page.', 'warning')
             return redirect(url_for('login'))
-        
         return func(*args, **kwargs)
-    
     return decorated_function
 
 
 ########## Routes before logging in #########
 @app.route('/')
 def home():
+    """Home landing page for all site visits"""
     return render_template('home.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    """Login route for signed up users"""
     form = LoginForm()
     if form.is_submitted() and form.validate():
-        if form.is_submitted() and form.validate():
-            user = User.authenticate(form.username.data,
-                                    form.password.data)
-
-        if user:
-            do_login(user)
-            flash(f"Hello, {user.username}!", "success")
-            return redirect("/user/home")
-
-        flash("Invalid credentials.", 'danger')
-        return redirect('/')
+        return handle_login(form)
     return render_template('login.html', form=form)
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     form = UserAddForm()
     if form.is_submitted() and form.validate():
-        try:
-            user = User.signup(
-                    username=form.username.data,
-                    password=form.password.data,
-                    email=form.email.data,
-                    image_url=form.image_url.data,
-                )
-            db.session.commit()
-
-        except IntegrityError:
-                flash("Username already taken", 'danger')
-                db.session.rollback()
-                return render_template('signup.html', form=form)
-
+        user = signUpNewUser(form)
         do_login(user)
-
-        return redirect("/user/home")
-
+        return redirect("/user/first")
     else:
         return render_template('signup.html', form=form)
     
@@ -120,14 +87,19 @@ def signup():
 @app.route('/user_home')
 @login_required
 def go_homepage():
-    outletprefs = []
-    outletpreflist = OutletPreferences.query.filter_by(user=g.user.id).all()
-    for outlet in outletpreflist:
-        print("++++++++++++++++",outlet)
-        outletprefs.append(outlet)
-    stories = requests.get(f"{BASE_URL}/top-headlines?sources=", headers=headers)
-
-    return render_template('user/home.html')
+    outlets = OutletPreferences.query.filter_by(user=g.user.id).all()
+    home_news_url = f"{BASE_URL}/top-headlines?sources="
+    for i in range(len(outlets)):
+        if i < len(outlets)-1:
+            home_news_url += outlets[i].outlet + ','
+        else:
+            home_news_url += outlets[i].outlet
+        print("+++++++++",home_news_url)
+    response = requests.get(f"{home_news_url}&pagesize=50", headers=headers)
+    print("+++++++++++++=====", response)
+    data = response.json()
+    print("++++++++",data)
+    return render_template('user/home.html', data=data)
 
 
 @app.route('/logout')
@@ -136,7 +108,7 @@ def logout():
     do_logout()
     return redirect('/')
 
-@app.route('/user/home', methods=['GET','POST'])
+@app.route('/user/first', methods=['GET','POST'])
 @login_required
 def user_home():
     """When user initially logs in, allow them to select preferences for their user experience."""
@@ -161,15 +133,7 @@ def first_prefs():
             data.append(response.json())
         return jsonify(data)
         
-
-
-@app.route('/user/news')
-@login_required
-def get_news():
-    response = requests.get(f"{BASE_URL}/top-headlines?country=us&pagesize=1", headers=headers)
-    data = response.json()
-    print(data)
-    return render_template('/user/news.html')
+    
 
 @app.route('/user/pref')
 @login_required
@@ -189,7 +153,9 @@ def send_to_db():
     form = PreferencesForm()
     if form.is_submitted() and form.validate():
         country_preferences = request.form.getlist('countries[]')
+        print("++++++++++++++++",country_preferences)
         outlet_preferences = request.form.getlist('outlets[]')
+        print("+++++++++++++++", outlet_preferences)
         for country in country_preferences:
             # check if already in list
             if CountryPreferences.query.filter_by(country=country, user=g.user.id).first() is None:
@@ -200,4 +166,11 @@ def send_to_db():
                 opref = OutletPreferences(user=g.user.id, outlet=outlet)
                 db.session.add(opref)
         db.session.commit()
+        print("++++ RETURNING REDIRECT +++++")
+        return redirect('/user_home')
     return redirect('/user_home')
+
+@app.route('/display_profile')
+def show_profile():
+    user = User.query.get(g.user.id)
+    return render_template('user/profile.html', user = user)

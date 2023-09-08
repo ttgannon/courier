@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container">
+
+    <h1>{{user.username}}'s profile</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="alert alert-dismissible alert-{{ messages[0][0] }}">
+                    <ul>
+                        {% for message in messages %}
+                            <li>{{ message[1] }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        {% endwith %}
+
+    <img src="{% if user.image_url %}{{ user.image_url }}{% else %}./static/generic-user-icon.jpg{% endif %}" alt="" class="profilePhoto">
+    
+    <form action="">
+        <button class="btn btn-primary">Manage Preferences</button>
+    </form>
+    <form action="">
+        <button class="btn btn-success">Change Profile Information</button>
+    </form>
+    <form action="">
+        <button class="btn btn-danger">Delete Account</button>
+    </form>
+
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+{% endblock %}

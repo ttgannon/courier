@@ -1,0 +1,31 @@
+.login-box {
+    max-width: 400px; /* Set a maximum width for the login box */
+    margin: 0 auto; /* Center the login box horizontally */
+    margin-bottom: 10px;
+}
+
+
+.button-group {
+    text-align: center;
+}
+
+.profilePhoto {
+    max-width: 30%;
+    border: 10px;
+}
+
+.btn {
+    margin: 3px;
+}
+
+.newsContainer {
+    text-align: left;
+    margin-left: 10%;
+    margin-right: 10%;
+
+}
+
+.card-header {
+    font-weight: bold;
+    color: #1E2640;
+}
