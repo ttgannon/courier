@@ -3,10 +3,10 @@
 {% block content %}
 
 <div class="container">
-    <h1 class="fade-in">welcome to courier, {{user.username}}</h1>
+    <h1 class="fade-in">manage your preferences {{user.username}}</h1>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <div class="alert alert-dismissible alert-{{ messages[0][0] }}">
+            <div class="alert alert-{{ messages[0][0] }} alert-dismissible ">
                 <ul>
                     {% for message in messages %}
                         <li>{{ message[1] }}</li>
@@ -16,14 +16,11 @@
         {% endif %}
     {% endwith %}
 
-    <h2>With courier, you can read news from sources you trust and no ads, curated to your preferences.</h2>
-<h2>
-    Let's get started. Help us store your preferences.
-</h2>
-
 <form>
     <button class="btn btn-primary" type="button" id="getStartedBtn">Let's get started</button>
 </form>
+
+
 
 <form id="preferencesForm" style="display: none!important; max-width: fit-content;" class="mx-auto d-block">
     {{ form1.hidden_tag() }}
@@ -31,12 +28,21 @@
         {% for error in field.errors %}
             <span class="text-danger">{{ error }}</span>
         {% endfor %}
+        {% set selected_items = [] %}
+        {% for item in field.data %}
+            {% if item['name'] %}
+                {% set _ = selected_items.append(item['name']) %}
+            {% endif %}
+        {% endfor %}
         <div class="form-group">
             <label for="{{ field.id }}">Select the countries you'd like to get your news from:</label>
             <select name="countries[]" multiple class="form-control" id="{{ field.id }}" size="10">
                 {% for display, value in countries %}
-                    <option value="{{ value }}" class="card text-white bg-success mb-3" style="max-width: 18rem; margin: 0;" {% if value in field.data %}selected{% endif %}>{{ display }}</option>
+                    <option {% if value in selected_items %}selected{% endif %} value="{{ value }}" class="card text-white bg-success mb-3" style="max-width: 18rem; margin: 0;">{{ display }}</option>
                 {% endfor %}
+                {% if selected_items %}
+                {{selected_items}}
+                {% endif %}
             </select>
         </div>
     {% endfor %}
@@ -88,6 +94,7 @@
 async function getCountryPrefs(preferencesForm) {
     let formData = new FormData(preferencesForm);
     wipePreferredOutlets();
+    console.log(formData);
     response = await axios.post("/user/first_prefs", formData);
     
     let outletForm = document.getElementById("outletForm");
@@ -95,6 +102,7 @@ async function getCountryPrefs(preferencesForm) {
 
     let outletDiv = document.getElementById("outletDiv");
     outletDiv.style.display = "block";
+
 
     let outletPrefs = document.getElementById("outletPrefs");
     outletPrefs.style.display = "block";

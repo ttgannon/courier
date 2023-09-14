@@ -17,6 +17,8 @@ class User(db.Model):
     email = db.Column(db.Text, nullable=False, unique=True)
     password = db.Column(db.Text, nullable=False)
     image_url = db.Column(db.Text)
+    country_preferences = db.relationship('CountryPreferences')
+
 
     @classmethod 
     def register(cls, username, pwd, email, first_name, last_name):

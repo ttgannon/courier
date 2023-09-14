@@ -6,7 +6,7 @@ from forms import UserAddForm, LoginForm, PreferencesForm
 from functools import wraps
 from helpers import signUpNewUser, CURR_USER_KEY, handle_login, do_login
 import requests
-from config import api_key, supported_countries
+from config import api_key, supported_countries, categories
 import json
 
 
@@ -38,7 +38,6 @@ def add_user_to_g():
         g.user = User.query.get(session[CURR_USER_KEY])
     else:
         g.user = None
-
 
 def do_logout():
     """Logout user."""
@@ -83,7 +82,6 @@ def signup():
 
 
 ####### Logged in user views and functions #######
-
 @app.route('/user_home')
 @login_required
 def go_homepage():
@@ -100,7 +98,6 @@ def go_homepage():
     data = response.json()
     print("++++++++",data)
     return render_template('user/home.html', data=data)
-
 
 @app.route('/logout')
 @login_required
@@ -120,7 +117,6 @@ def user_home():
 @app.route('/user/first_prefs', methods=['GET', 'POST'])
 @login_required
 def first_prefs():
-    user = User.query.get(g.user.id) 
     form = PreferencesForm()
     if form.is_submitted() and form.validate():
         country_preferences = request.form.getlist('countries[]')
@@ -132,8 +128,6 @@ def first_prefs():
             response = requests.get(f"{BASE_URL}/top-headlines/sources?country={country}", headers=headers)
             data.append(response.json())
         return jsonify(data)
-        
-    
 
 @app.route('/user/pref')
 @login_required
@@ -147,30 +141,86 @@ def new_user_prefs():
     return jsonify(data)
 
 
+
+#### it might be best to make one route for initially setting 
+#### preferences, and another for updating; otherwise we need to 
+#### cycle through both lists twice-- the entire db and the entire list
 @app.route('/submit_prefs', methods=["GET","POST"])
 @login_required
-def send_to_db():
+def update_preferences():
     form = PreferencesForm()
+    # deletes all user prefs in db and readds all the ones present in county list
     if form.is_submitted() and form.validate():
         country_preferences = request.form.getlist('countries[]')
-        print("++++++++++++++++",country_preferences)
         outlet_preferences = request.form.getlist('outlets[]')
-        print("+++++++++++++++", outlet_preferences)
-        for country in country_preferences:
-            # check if already in list
-            if CountryPreferences.query.filter_by(country=country, user=g.user.id).first() is None:
+        country_prefs_db = CountryPreferences.query.filter_by(user=g.user.id).all()
+        outlet_prefs_db = OutletPreferences.query.filter_by(user=g.user.id).all()
+        
+        # Delete user preferences from the db;
+        # TODO establish method to delete in one go
+        if len(country_preferences) > 0:
+            for country in country_prefs_db:
+                db.session.delete(country)
+            for outlet in outlet_prefs_db:
+                db.session.delete(outlet)
+        
+            #Instate users preferences from form data into db; 
+            # TODO is there a method to add them all and not one by one?
+            for country in country_preferences:
                 cpref = CountryPreferences(country=country, user=g.user.id)
                 db.session.add(cpref)
-        for outlet in outlet_preferences:
-            if OutletPreferences.query.filter_by(outlet=outlet, user=g.user.id).first() is None:
+            for outlet in outlet_preferences:
                 opref = OutletPreferences(user=g.user.id, outlet=outlet)
                 db.session.add(opref)
-        db.session.commit()
-        print("++++ RETURNING REDIRECT +++++")
+            
+            db.session.commit()
+        else:
+            flash("Your preferences have been saved, but you didn't select any outlets. We are showing top US headlines.")
+            # TO DO: SET HOME PAGE DEFAULT VIEW
+            return redirect('/user_home')
         return redirect('/user_home')
     return redirect('/user_home')
+
 
 @app.route('/display_profile')
 def show_profile():
     user = User.query.get(g.user.id)
     return render_template('user/profile.html', user = user)
+
+
+@app.route('/user/manage_prefs', methods=['GET','POST'])
+@login_required
+def manage_preferences():
+    """Allow user to update preferences for their user experience."""
+    country_prefs = CountryPreferences.query.filter_by(user=g.user.id).all()
+    user = User.query.get(g.user.id)
+    form1 = PreferencesForm()
+    form2 = PreferencesForm()
+    for preference in country_prefs:
+        print("++++++++", form1.countries)
+        form1.countries.append_entry({'name': preference.country})
+        print("++++++++++++++",preference.country)
+    print("+++++++++++",form1.data)
+    return render_template('/user/manage_prefs.html', user=user, countries=supported_countries, form1=form1, form2=form2)
+
+
+@app.route('/discover', methods=['GET','POST'])
+@login_required
+def discover_news():
+    """Open Discover page, and allow user to discover news sources and articles based on categories."""
+    form = PreferencesForm()
+    if request.method == 'GET':
+        return render_template('user/discover.html', countries=supported_countries, categories=categories, form=form)
+    else:
+        data = request.json.get('articles')
+        return render_template('/user/discover.html', data=data, form=form, categories=categories)
+    
+@app.route('/interact_with_api', methods=['GET','POST'])
+@login_required
+def interact_with_api():
+    category = request.args.get('category')
+    country = request.args.get('country')
+    print(country, category, "+++++++++++++++")
+    response = requests.get(f'{BASE_URL}/top-headlines?country={country}&category={category}', headers=headers)
+    data = response.json()
+    return data

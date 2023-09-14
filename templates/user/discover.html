@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+<h1 class="container">Disover More.</h1>
+<h2 class="container">Select a country and a category.</h2>
+{% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert alert-dismissible alert-{{ messages[0][0] }} container">
+                <ul>
+                    {% for message in messages %}
+                        <li>{{ message[1] }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+{% endwith %}
+
+<div class="text-center form-group mx-auto text-center" style="max-width: 30%;">
+    <h2 style="margin-bottom: 0;">Country</h2>
+    <form id="preferencesForm" class="mx-auto d-block">
+        {{ form.hidden_tag() }}
+        {% for field in form if field.widget.input_type != 'hidden' %}
+            {% for error in field.errors %}
+                <span class="text-danger">{{ error }}</span>
+            {% endfor %}
+            <div class="form-group">
+                <label for="countries"></label>
+                <select name="countries[]" id="discover_countries" class="form-control">
+                    {% for country, code in countries %}
+                <option {% if value in selected_items %}selected{% endif %} value="{{ code }}" class="card text-white bg-success mb-3" style="max-width: 18rem; margin: 0;">{{ country }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endfor %}
+    </form>
+</div>
+
+
+<div class="container" style="margin-bottom: 15px;">
+    <div class="text-center form-group mx-auto text-center" style="max-width: 30%;">
+        <label for="category"></label>
+        <h2>Category</h2>
+        {% for category in categories %}
+        <button type="button" class="btn btn-primary categoryBtn categoryBtns form-control">{{category}}</button>
+        {% endfor %}
+    </div>
+</div>
+
+<div id="articlesContainer"></div>
+
+<!-- {% if data %}
+<div class="container text-center">
+    <div class="row">
+        {% for article in data['articles'] %}
+        <div class="col-md-8 mx-auto">
+            <div class="card mb-4">
+                <div class="card-header">{{article['source']['name']}}</div>
+                  <div class="card-body">
+                    <h5 class="card-title">{{article['title']}}</h5>
+                    {% if article['urlToImage'] %}
+                    <img src="{{article['urlToImage']}}" class="card-img" alt="">
+                    {% endif %}
+                    {% if article['description'] %}
+                    <p class="card-text">{{article['description']}}</p>
+                    {% endif %}
+                    {% if article['url'] is not none %}
+                    <a href="{{article['url']}}" class="btn btn-primary">You can read this story here</a>
+                    {% endif %}
+                  </div>
+                  <div class="card-footer text-muted">
+                    DATE
+                  </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %} -->
+
+{% raw %}
+<script id="article-template" type="text/x-handlebars-template">
+    <div class="container text-center">
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="card mb-4">
+                    <div class="card-header">{{source.name}}</div>
+                    <div class="card-body">
+                        <h5 class="card-title">{{title}}</h5>
+                        {{#if urlToImage}}
+                            <img src="{{urlToImage}}" class="card-img" alt="">
+                        {{/if}}
+                        {{#if description}}
+                            <p class="card-text">{{description}}</p>
+                        {{/if}}
+                        {{#if url}}
+                            <a href="{{url}}" class="btn btn-primary">You can read this story here</a>
+                        {{/if}}
+                    </div>
+                    <div class="card-footer text-muted">
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</script>
+
+{% endraw %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        let categoryBtns = document.getElementsByClassName('categoryBtn');
+        
+        for (let categoryBtn of categoryBtns) {
+            categoryBtn.addEventListener('click', async function () {
+                changeColor(categoryBtn);
+                let articles = await APICall(categoryBtn);
+                displayArticles(articles);
+            });
+        }
+        
+    })
+
+    function changeColor(categoryBtn) {
+        categoryBtn.style.backgroundColor = '#90ee90';
+        categoryBtn.style.border = '#90ee90';
+        categoryBtn.style.fontWeight = 'bold';
+        categoryBtn.style.color = 'white';
+    }
+
+    async function APICall(categoryBtn) {
+        let category = categoryBtn.innerText;
+        let country = document.getElementById('discover_countries').options[document.getElementById('discover_countries').selectedIndex].value;
+        let json = await axios.get('/interact_with_api', {
+            params: {
+                category: category,
+                country: country
+            }
+        });
+        let articles = json.data;
+        console.log(articles);
+        return articles;
+    }
+
+    async function displayArticles(articles) {
+        const source = document.getElementById('article-template').innerHTML;
+        const template = Handlebars.compile(source);
+        const articlesHtml = articles.articles.map(article => template(article)).join('');
+
+        const articlesContainer = document.getElementById('articlesContainer');
+        articlesContainer.innerHTML = articlesHtml;
+
+    }
+</script>
+{% endblock %}

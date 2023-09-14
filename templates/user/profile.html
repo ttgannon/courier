@@ -19,7 +19,7 @@
 
     <img src="{% if user.image_url %}{{ user.image_url }}{% else %}./static/generic-user-icon.jpg{% endif %}" alt="" class="profilePhoto">
     
-    <form action="">
+    <form action="/user/manage_prefs">
         <button class="btn btn-primary">Manage Preferences</button>
     </form>
     <form action="">

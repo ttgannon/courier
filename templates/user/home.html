@@ -6,13 +6,12 @@
 <h1 class="container">here's your preferred news</h1>
 {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <div class="alert alert-dismissible alert-{{ messages[0][0] }} container">
-                <ul>
-                    {% for message in messages %}
-                        <li>{{ message[1] }}</li>
-                    {% endfor %}
-                </ul>
+        {% for message in messages %}
+            <div class="alert alert-{{ messages[0][0] }} alert-dismissible fade show container" role="alert">
+                {{ message[1] }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
+        {% endfor %}
         {% endif %}
 {% endwith %}
 
@@ -36,7 +35,7 @@
                     {% endif %}
                   </div>
                   <div class="card-footer text-muted">
-                    DATE
+                    
                   </div>
             </div>
         </div>
