@@ -6,8 +6,8 @@ from forms import UserAddForm, LoginForm, PreferencesForm
 from functools import wraps
 from helpers import signUpNewUser, CURR_USER_KEY, handle_login, do_login
 import requests
-from config import api_key, supported_countries, categories
-import json
+from config import supported_countries, categories
+from api_key import api_key
 
 
 BASE_URL = 'https://newsapi.org/v2'
