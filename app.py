@@ -26,8 +26,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = (
     os.environ.get('DATABASE_URL', 'postgresql:///courier_capstone'))
 
 connect_db(app)
-# db.drop_all()
-# db.create_all()
 
 
 #### Helper functions ####
@@ -88,7 +86,6 @@ def signup():
 @login_required
 def go_homepage():
     outlets = OutletPreferences.query.filter_by(user=g.user.id).all()
-    print("++++++++",outlets)
     if len(outlets) != 0:
         home_news_url = f"{BASE_URL}/top-headlines?sources="
         for i in range(len(outlets)):
@@ -143,11 +140,6 @@ def new_user_prefs():
     data = response.json()
     return jsonify(data)
 
-
-
-#### it might be best to make one route for initially setting 
-#### preferences, and another for updating; otherwise we need to 
-#### cycle through both lists twice-- the entire db and the entire list
 @app.route('/submit_prefs', methods=["GET","POST"])
 @login_required
 def update_preferences():
@@ -160,7 +152,6 @@ def update_preferences():
         outlet_prefs_db = OutletPreferences.query.filter_by(user=g.user.id).all()
         
         # Delete user preferences from the db;
-        # TODO establish method to delete in one go
         if len(country_preferences) > 0:
             for country in country_prefs_db:
                 db.session.delete(country)
@@ -168,7 +159,6 @@ def update_preferences():
                 db.session.delete(outlet)
         
             #Instate users preferences from form data into db; 
-            # TODO is there a method to add them all and not one by one?
             for country in country_preferences:
                 cpref = CountryPreferences(country=country, user=g.user.id)
                 db.session.add(cpref)
@@ -179,7 +169,6 @@ def update_preferences():
             db.session.commit()
         else:
             flash("Your preferences have been saved, but you didn't select any outlets. We are showing top US headlines.")
-            # TO DO: SET HOME PAGE DEFAULT VIEW
             return redirect('/user_home')
         return redirect('/user_home')
     return redirect('/user_home')
