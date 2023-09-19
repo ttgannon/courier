@@ -16,7 +16,7 @@ class User(db.Model):
     username = db.Column(db.Text, nullable=False, unique=True)
     email = db.Column(db.Text, nullable=False, unique=True)
     password = db.Column(db.Text, nullable=False)
-    image_url = db.Column(db.Text)
+    image_url = db.Column(db.Text, default='/static/generic-user-icon.jpg')
     country_preferences = db.relationship('CountryPreferences')
 
     def __repr__(self):
@@ -108,7 +108,7 @@ class CountryPreferences(db.Model):
     """Users set their country preferences"""
     __tablename__ = "country_preferences"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user = db.Column(db.Integer, db.ForeignKey('users.id'))
+    user = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'))
     country = db.Column(db.Text)
 
 class OutletPreferences(db.Model):

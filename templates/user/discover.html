@@ -115,7 +115,6 @@
         
         for (let categoryBtn of categoryBtns) {
             categoryBtn.addEventListener('click', async function () {
-                changeColor(categoryBtn);
                 let articles = await APICall(categoryBtn);
                 displayArticles(articles);
             });

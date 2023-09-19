@@ -3,16 +3,16 @@
 {% block content %}
 
 
-<h1 class="container">here's your preferred news</h1>
+<h1 class="container header">here's your preferred news</h1>
 {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ messages[0][0] }} alert-dismissible fade show container" role="alert">
-                {{ message[1] }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        {% endfor %}
-        {% endif %}
+    {% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ messages[0][0] }} alert-dismissible fade show container" role="alert">
+            {{ message[1] }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+    {% endif %}
 {% endwith %}
 
 

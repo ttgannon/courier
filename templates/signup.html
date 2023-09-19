@@ -4,12 +4,10 @@
 
 {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <div class="alert alert-dismissible alert-danger">
-                <ul>
+            <div class="alert alert-dismissible alert-danger container">
                     {% for message in messages %}
-                        <li>{{ message[1] }}</li>
+                        {{ message[1] }}
                     {% endfor %}
-                </ul>
             </div>
         {% endif %}
     {% endwith %}
@@ -19,7 +17,6 @@
       <h2 class="join-message">Join courier today.</h2>
         <form method="POST" id="create_user_form" action="/signup">
             {{ form.hidden_tag() }}
-
             {% for field in form if field.widget.input_type != 'hidden' %}
                 {% for error in field.errors %}
                     <span class="text-danger">{{ error }}</span>

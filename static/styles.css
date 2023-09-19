@@ -53,6 +53,19 @@ select.form-control option:checked {
 }
 
 .alert {
-    max-width: 10%;
+    max-width: fit-content;
     text-align: center;
+    justify-content: center;
+}
+
+.form-control {
+    margin-bottom: 5px;
+}
+
+.welcome {
+    font-size: 100px;
+}
+
+.header {
+    margin-left: 19%;
 }

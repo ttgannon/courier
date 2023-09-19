@@ -3,7 +3,7 @@
 {% block content %}
 
 <div class="container">
-    <h1 class="fade-in">welcome to courier, {{user.username}}</h1>
+    <h1 class="fade-in text-center welcome">welcome to courier, {{user.username}}</h1>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             <div class="alert alert-dismissible alert-{{ messages[0][0] }}">
@@ -16,14 +16,21 @@
         {% endif %}
     {% endwith %}
 
-    <h2>With courier, you can read news from sources you trust and no ads, curated to your preferences.</h2>
-<h2>
-    Let's get started. Help us store your preferences.
-</h2>
+    <div class="container d-flex justify-content-center align-items-center">
+        <div class="row">
+            <div class="col-sm-12">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">With courier, you can read news from sources you trust and no ads, curated to your preferences.</h5>
+                  <p class="card-text">Let's get started. Help us store your preferences.</p>
+                  <button class="btn btn-primary" type="button" id="getStartedBtn">Let's get started</button>
+                </div>
+              </div>
+            </div>
+        </div>    
+    </div>
+    
 
-<form>
-    <button class="btn btn-primary" type="button" id="getStartedBtn">Let's get started</button>
-</form>
 
 <form id="preferencesForm" style="display: none!important; max-width: fit-content;" class="mx-auto d-block">
     {{ form1.hidden_tag() }}
@@ -53,17 +60,10 @@
         <label for="{{ field.id }}">Select preferred outlets</label>
         <select multiple class="form-control" id="outletPrefs" name="outlets[]"></select>
         {% endfor %}
-        <button type="submit" id="submitUserPrefsBtn">Select Preferences</button>
+        <button type="submit" class="btn btn-primary" id="submitUserPrefsBtn">Select Preferences</button>
     </div>
     
 </form>
-
-
-
-<form action="/user/news">
-    <button>What's the news?</button>
-</form>
-
 </div>
 
 <script>

@@ -74,6 +74,8 @@ def signup():
     form = UserAddForm()
     if form.is_submitted() and form.validate():
         user = signUpNewUser(form)
+        if isinstance(user, str):
+            return render_template("signup.html", form=form)
         do_login(user)
         return redirect("/user/first")
     else:
@@ -86,18 +88,19 @@ def signup():
 @login_required
 def go_homepage():
     outlets = OutletPreferences.query.filter_by(user=g.user.id).all()
-    home_news_url = f"{BASE_URL}/top-headlines?sources="
-    for i in range(len(outlets)):
-        if i < len(outlets)-1:
-            home_news_url += outlets[i].outlet + ','
-        else:
-            home_news_url += outlets[i].outlet
-        print("+++++++++",home_news_url)
-    response = requests.get(f"{home_news_url}&pagesize=50", headers=headers)
-    print("+++++++++++++=====", response)
-    data = response.json()
-    print("++++++++",data)
-    return render_template('user/home.html', data=data)
+    print("++++++++",outlets)
+    if len(outlets) != 0:
+        home_news_url = f"{BASE_URL}/top-headlines?sources="
+        for i in range(len(outlets)):
+            if i < len(outlets)-1:
+                home_news_url += outlets[i].outlet + ','
+            else:
+                home_news_url += outlets[i].outlet
+        response = requests.get(f"{home_news_url}&pagesize=50", headers=headers)
+        data = response.json()
+        return render_template('user/home.html', data=data)
+    flash("We don't have any preferences for you yet. Set some here.")
+    return redirect ('/user/first')
 
 @app.route('/logout')
 @login_required
@@ -149,7 +152,7 @@ def new_user_prefs():
 @login_required
 def update_preferences():
     form = PreferencesForm()
-    # deletes all user prefs in db and readds all the ones present in county list
+    # deletes all user prefs in db and readds all the ones present in country list
     if form.is_submitted() and form.validate():
         country_preferences = request.form.getlist('countries[]')
         outlet_preferences = request.form.getlist('outlets[]')
@@ -197,10 +200,7 @@ def manage_preferences():
     form1 = PreferencesForm()
     form2 = PreferencesForm()
     for preference in country_prefs:
-        print("++++++++", form1.countries)
         form1.countries.append_entry({'name': preference.country})
-        print("++++++++++++++",preference.country)
-    print("+++++++++++",form1.data)
     return render_template('/user/manage_prefs.html', user=user, countries=supported_countries, form1=form1, form2=form2)
 
 
@@ -220,7 +220,6 @@ def discover_news():
 def interact_with_api():
     category = request.args.get('category')
     country = request.args.get('country')
-    print(country, category, "+++++++++++++++")
     response = requests.get(f'{BASE_URL}/top-headlines?country={country}&category={category}', headers=headers)
     data = response.json()
     return data
